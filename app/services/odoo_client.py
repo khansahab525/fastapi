@@ -12,13 +12,13 @@ class OdooApiError(Exception):
 
 
 class OdooClient:
-    def __init__(self) -> None:
-        self.base_url = settings.odoo_url.rstrip("/")
-        self.api_key = settings.odoo_api_key
+    @property
+    def base_url(self) -> str:
+        return settings.odoo_url.rstrip("/")
 
     def _headers(self) -> dict[str, str]:
         return {
-            "X-API-Key": self.api_key,
+            "X-API-Key": settings.odoo_api_key,
             "Content-Type": "application/json",
         }
 

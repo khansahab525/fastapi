@@ -4,7 +4,7 @@ from typing import Any
 from langgraph.checkpoint.memory import MemorySaver
 
 from app.agent.graph import build_cargo_agent, extract_agent_reply
-from app.config import settings
+from app.config import PROJECT_ROOT, load_env_file, settings
 
 _checkpointer = MemorySaver()
 _agent = None
@@ -15,13 +15,20 @@ class ChatConfigurationError(Exception):
 
 
 def _validate_config() -> None:
-    if not settings.openai_api_key.strip():
+    env_file = load_env_file()
+    env_hint = (
+        f"Loaded from {env_file}" if env_file else f"No .env file found at {PROJECT_ROOT / '.env'}"
+    )
+
+    if not settings.openai_api_key:
         raise ChatConfigurationError(
-            "OPENAI_API_KEY is not configured. Set it in .env to use the AI agent."
+            f"OPENAI_API_KEY is not set. Add it to {PROJECT_ROOT / '.env'} "
+            f"(copy from .env.example). {env_hint}"
         )
-    if not settings.odoo_api_key.strip():
+    if not settings.odoo_api_key:
         raise ChatConfigurationError(
-            "ODOO_API_KEY is not configured. Set it in .env (same value as ai_chatbot_api.api_key in Odoo)."
+            f"ODOO_API_KEY is not set. Add it to {PROJECT_ROOT / '.env'} "
+            f"(same value as ai_chatbot_api.api_key in Odoo). {env_hint}"
         )
 
 
