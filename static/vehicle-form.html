@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Add Vehicle | Albassami</title>
+  <link rel="icon" href="/favicon.ico" type="image/svg+xml" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      font-family: "Roboto", "Segoe UI", Helvetica, Arial, sans-serif;
+      background: #f0eeee;
+    }
+    .navbar {
+      background: #875a7b;
+      color: #fff;
+      padding: 0.6rem 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .navbar a { color: #fff; text-decoration: none; font-size: 0.9rem; opacity: 0.9; }
+    .navbar a:hover { opacity: 1; text-decoration: underline; }
+    .wrap {
+      max-width: 560px;
+      margin: 2rem auto;
+      padding: 0 1rem 3rem;
+    }
+    .card {
+      background: #fff;
+      border-radius: 3px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.1);
+      overflow: hidden;
+    }
+    .card-head {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid #eee;
+    }
+    .card-head h1 { font-size: 1.25rem; font-weight: 500; color: #4c4c4c; }
+    .card-head p { font-size: 0.85rem; color: #888; margin-top: 0.25rem; }
+    form { padding: 1.25rem 1.5rem 1.5rem; }
+    label {
+      display: block;
+      font-size: 0.8rem;
+      color: #666;
+      margin-bottom: 0.3rem;
+      margin-top: 0.85rem;
+    }
+    label:first-child { margin-top: 0; }
+    select, input {
+      width: 100%;
+      padding: 0.5rem 0.6rem;
+      border: 1px solid #ccc;
+      border-radius: 3px;
+      font-size: 0.95rem;
+    }
+    select:focus, input:focus {
+      outline: none;
+      border-color: #875a7b;
+      box-shadow: 0 0 0 2px rgba(135, 90, 123, 0.2);
+    }
+    .row { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 0.5rem; }
+  .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    .plate-section { display: none; margin-top: 0.5rem; }
+    .plate-section.visible { display: block; }
+    .error {
+      background: #f8d7da;
+      color: #842029;
+      padding: 0.65rem;
+      border-radius: 3px;
+      font-size: 0.85rem;
+      margin-bottom: 1rem;
+      display: none;
+    }
+    .actions {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 1.5rem;
+      padding-top: 1rem;
+      border-top: 1px solid #eee;
+    }
+    .btn {
+      flex: 1;
+      padding: 0.65rem;
+      border: none;
+      border-radius: 3px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    .btn-primary { background: #875a7b; color: #fff; }
+    .btn-primary:hover { background: #714b67; }
+    .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-secondary { background: #e9e9e9; color: #444; }
+    .loading { text-align: center; padding: 2rem; color: #888; }
+  </style>
+</head>
+<body>
+  <div class="navbar">
+    <strong>Albassami Cargo</strong>
+    <a href="/">← Back to chat</a>
+  </div>
+  <div class="wrap">
+    <div class="card">
+      <div class="card-head">
+        <h1>Add new vehicle</h1>
+        <p>Fill in the details below, then save to return to the chat.</p>
+      </div>
+      <div id="loading" class="loading">Loading form…</div>
+      <form id="vehicle-form" style="display:none">
+        <div id="error" class="error"></div>
+
+        <label for="car_make">Car make *</label>
+        <select id="car_make" required></select>
+
+        <label for="car_model">Car model *</label>
+        <select id="car_model" required disabled>
+          <option value="">Select make first</option>
+        </select>
+
+        <div class="row-2">
+          <div>
+            <label for="year">Year *</label>
+            <select id="year" required></select>
+          </div>
+          <div>
+            <label for="car_color">Color</label>
+            <select id="car_color">
+              <option value="">— Optional —</option>
+            </select>
+          </div>
+        </div>
+
+        <label for="plate_registration">Plate type *</label>
+        <select id="plate_registration" required></select>
+
+        <div id="saudi-plate" class="plate-section">
+          <label>Saudi plate</label>
+          <div class="row">
+            <select id="plate_third"></select>
+            <select id="plate_second"></select>
+            <select id="plate_one"></select>
+            <input id="plate_no" maxlength="4" placeholder="1234" />
+          </div>
+        </div>
+
+        <div id="non-saudi-plate" class="plate-section">
+          <label for="non_saudi_plate_no">Plate number *</label>
+          <input id="non_saudi_plate_no" />
+        </div>
+
+        <div id="chassis-section" class="plate-section">
+          <label for="chassis_no">Chassis number *</label>
+          <input id="chassis_no" />
+        </div>
+
+        <div class="actions">
+          <button type="button" class="btn btn-secondary" id="cancel">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="save">Save &amp; return to chat</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <script>
+    const AR_LETTERS = ["أ","ب","ح","د","ر","س","ص","ط","ع","ق","ك","ل","م","ن","ه","و","ى"];
+    const form = document.getElementById("vehicle-form");
+    const loading = document.getElementById("loading");
+    const errorEl = document.getElementById("error");
+    const saveBtn = document.getElementById("save");
+
+    function fillSelect(el, items, valueKey, labelKey, placeholder) {
+      el.innerHTML = "";
+      if (placeholder) {
+        const o = document.createElement("option");
+        o.value = "";
+        o.textContent = placeholder;
+        el.appendChild(o);
+      }
+      items.forEach((item) => {
+        const o = document.createElement("option");
+        o.value = item[valueKey];
+        o.textContent = item[labelKey];
+        el.appendChild(o);
+      });
+    }
+
+    function fillLetterSelect(el) {
+      el.innerHTML = "";
+      const empty = document.createElement("option");
+      empty.value = "";
+      empty.textContent = "—";
+      el.appendChild(empty);
+      AR_LETTERS.forEach((l) => {
+        const o = document.createElement("option");
+        o.value = l;
+        o.textContent = l;
+        el.appendChild(o);
+      });
+    }
+
+    function togglePlateSections() {
+      const reg = document.getElementById("plate_registration").value;
+      document.getElementById("saudi-plate").classList.toggle("visible", reg === "saudi");
+      document.getElementById("non-saudi-plate").classList.toggle("visible", reg === "non-saudi");
+      document.getElementById("chassis-section").classList.toggle("visible", reg === "new_vehicle");
+    }
+
+    async function loadModels(makeId) {
+      const modelEl = document.getElementById("car_model");
+      if (!makeId) {
+        modelEl.disabled = true;
+        modelEl.innerHTML = "<option value=\"\">Select make first</option>";
+        return;
+      }
+      modelEl.disabled = true;
+      modelEl.innerHTML = "<option value=\"\">Loading…</option>";
+      const res = await fetch(`/vehicles/models?car_make_id=${makeId}`, { credentials: "same-origin" });
+      if (res.status === 401) {
+        window.location.href = "/login";
+        return;
+      }
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const msg = data.detail || "Could not load models";
+        modelEl.innerHTML = `<option value="">${typeof msg === "string" ? msg : "Error loading models"}</option>`;
+        modelEl.disabled = true;
+        return;
+      }
+      const models = data.models || [];
+      if (!models.length) {
+        modelEl.innerHTML = "<option value=\"\">No models configured for this make</option>";
+        modelEl.disabled = true;
+        return;
+      }
+      fillSelect(modelEl, models, "id", "name", "Select model");
+      modelEl.disabled = false;
+    }
+
+    async function init() {
+      const res = await fetch("/vehicles/form-options", { credentials: "same-origin" });
+      if (res.status === 401) {
+        window.location.href = "/login";
+        return;
+      }
+      const opts = await res.json();
+
+      fillSelect(document.getElementById("car_make"), opts.makes || [], "id", "name", "Select make");
+      fillSelect(document.getElementById("year"), opts.years || [], "id", "name", "Select year");
+      fillSelect(document.getElementById("car_color"), opts.colors || [], "id", "name");
+      fillSelect(
+        document.getElementById("plate_registration"),
+        opts.plate_registrations || [],
+        "value",
+        "label"
+      );
+
+      fillLetterSelect(document.getElementById("plate_one"));
+      fillLetterSelect(document.getElementById("plate_second"));
+      fillLetterSelect(document.getElementById("plate_third"));
+
+      document.getElementById("car_make").addEventListener("change", (e) => {
+        loadModels(e.target.value);
+      });
+      document.getElementById("plate_registration").addEventListener("change", togglePlateSections);
+      togglePlateSections();
+
+      loading.style.display = "none";
+      form.style.display = "block";
+    }
+
+    document.getElementById("cancel").addEventListener("click", () => {
+      window.location.href = "/";
+    });
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      errorEl.style.display = "none";
+      saveBtn.disabled = true;
+
+      const payload = {
+        car_make: parseInt(document.getElementById("car_make").value, 10),
+        car_model: parseInt(document.getElementById("car_model").value, 10),
+        year: parseInt(document.getElementById("year").value, 10),
+        plate_registration: document.getElementById("plate_registration").value,
+        plate_no: document.getElementById("plate_no").value.trim(),
+        plate_one: document.getElementById("plate_one").value,
+        plate_second: document.getElementById("plate_second").value,
+        plate_third: document.getElementById("plate_third").value,
+        non_saudi_plate_no: document.getElementById("non_saudi_plate_no").value.trim(),
+        chassis_no: document.getElementById("chassis_no").value.trim(),
+      };
+      const color = document.getElementById("car_color").value;
+      if (color) payload.car_color = parseInt(color, 10);
+
+      try {
+        const res = await fetch("/vehicles/create", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "same-origin",
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          errorEl.textContent = data.detail || "Could not save vehicle";
+          errorEl.style.display = "block";
+          return;
+        }
+        const v = data.vehicle || {};
+        const params = new URLSearchParams({
+          vehicle_saved: "1",
+          vehicle_id: v.id || "",
+          vehicle_name: v.name || "",
+        });
+        window.location.href = "/?" + params.toString();
+      } catch (err) {
+        errorEl.textContent = "Network error: " + err.message;
+        errorEl.style.display = "block";
+      } finally {
+        saveBtn.disabled = false;
+      }
+    });
+
+    init();
+  </script>
+</body>
+</html>
