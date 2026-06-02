@@ -63,6 +63,13 @@ class Settings:
     def openai_model(self) -> str:
         return getenv("OPENAI_MODEL", "gpt-4o-mini")
 
+    @property
+    def session_secret(self) -> str:
+        secret = getenv("SESSION_SECRET")
+        if not secret:
+            secret = "change-me-in-production-use-long-random-string"
+        return secret
+
 
 settings = Settings()
 

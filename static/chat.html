@@ -49,6 +49,17 @@
     }
     header h1 { font-size: 1.1rem; font-weight: 600; }
     header p { font-size: 0.8rem; color: var(--muted); }
+    header .spacer { flex: 1; }
+    .btn-logout {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 0.4rem 0.85rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+    .btn-logout:hover { border-color: var(--accent); color: var(--text); }
     #chat {
       flex: 1;
       overflow-y: auto;
@@ -160,6 +171,27 @@
     }
     #send:hover:not(:disabled) { background: var(--accent-hover); }
     #send:disabled { opacity: 0.5; cursor: not-allowed; }
+    .vehicle-banner {
+      background: rgba(0, 150, 136, 0.15);
+      border: 1px solid var(--accent);
+      color: var(--text);
+      padding: 0.75rem 1rem;
+      border-radius: 10px;
+      margin-bottom: 1rem;
+      font-size: 0.9rem;
+    }
+    .vehicle-banner a { color: var(--accent); font-weight: 600; }
+    a.chip-link {
+      display: inline-block;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 0.4rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      text-decoration: none;
+    }
+    a.chip-link:hover { background: var(--accent); border-color: var(--accent); }
   </style>
 </head>
 <body>
@@ -167,8 +199,10 @@
     <div class="logo">A</div>
     <div>
       <h1>Albassami Cargo Assistant</h1>
-      <p>Ask about cargo line status, residual amount, delivery &amp; trip info</p>
+      <p id="user-greeting">Ask about cargo line status, residual amount, delivery &amp; trip info</p>
     </div>
+    <div class="spacer"></div>
+    <button type="button" class="btn-logout" id="logout">Log out</button>
   </header>
 
   <main id="chat">
@@ -179,6 +213,8 @@
         <button type="button" class="chip" data-prompt="What is the status and residual amount for line P?">Line status &amp; residual</button>
         <button type="button" class="chip" data-prompt="Search cargo lines by plate number ">Search by plate</button>
         <button type="button" class="chip" data-prompt="Show cargo order details for order ">Order details</button>
+        <button type="button" class="chip" data-prompt="I want to create a new cargo order">Create cargo order</button>
+        <a class="chip-link" href="/vehicle/add">Add new vehicle (form)</a>
       </div>
     </div>
   </main>
@@ -196,9 +232,51 @@
     const input = document.getElementById("input");
     const sendBtn = document.getElementById("send");
     const SESSION_KEY = "albassami_chat_session_id";
+    const AUTO_FORM_FLAG = "albassami_vehicle_form_auto_opened";
 
     let sessionId = localStorage.getItem(SESSION_KEY);
     let busy = false;
+
+    async function ensureAuth() {
+      const res = await fetch("/auth/me", { credentials: "same-origin" });
+      if (!res.ok) {
+        window.location.href = "/login";
+        return null;
+      }
+      const user = await res.json();
+      document.getElementById("user-greeting").textContent =
+        `Signed in as ${user.name || user.login}`;
+      return user;
+    }
+
+    document.getElementById("logout").addEventListener("click", async () => {
+      await fetch("/auth/logout", { method: "POST", credentials: "same-origin" });
+      localStorage.removeItem(SESSION_KEY);
+      window.location.href = "/login";
+    });
+
+    function handleVehicleReturn() {
+      const p = new URLSearchParams(window.location.search);
+      if (p.get("vehicle_saved") !== "1") return;
+      const vid = p.get("vehicle_id") || "";
+      const vname = p.get("vehicle_name") || "Vehicle";
+      const banner = document.createElement("div");
+      banner.className = "vehicle-banner";
+      banner.innerHTML =
+        `Vehicle <strong>${vname}</strong> (ID ${vid}) was saved. ` +
+        `You can continue your cargo order in the chat.`;
+      const welcome = chatEl.querySelector(".welcome");
+      if (welcome) welcome.prepend(banner);
+      else chatEl.prepend(banner);
+      localStorage.removeItem(AUTO_FORM_FLAG);
+      window.history.replaceState({}, "", "/");
+      // Trigger one continuation turn so backend context can be applied immediately.
+      setTimeout(() => {
+        sendMessage("I saved the new vehicle, continue with creating the cargo order.");
+      }, 150);
+    }
+
+    ensureAuth().then(() => handleVehicleReturn());
 
     function appendMessage(text, role) {
       const welcome = chatEl.querySelector(".welcome");
@@ -210,6 +288,22 @@
       chatEl.appendChild(el);
       chatEl.scrollTop = chatEl.scrollHeight;
       return el;
+    }
+
+    function maybeAutoOpenVehicleForm(replyText) {
+      if (!replyText || localStorage.getItem(AUTO_FORM_FLAG) === "1") return;
+      const lower = replyText.toLowerCase();
+      const asksVehicleForm =
+        lower.includes("/vehicle/add") ||
+        lower.includes("add new vehicle") ||
+        lower.includes("open the vehicle form");
+      if (!asksVehicleForm) return;
+
+      localStorage.setItem(AUTO_FORM_FLAG, "1");
+      appendMessage("Opening vehicle form…", "assistant");
+      setTimeout(() => {
+        window.location.href = "/vehicle/add";
+      }, 220);
     }
 
     function setBusy(value) {
@@ -233,8 +327,14 @@
         const res = await fetch("/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          credentials: "same-origin",
           body: JSON.stringify({ message, session_id: sessionId }),
         });
+
+        if (res.status === 401) {
+          window.location.href = "/login";
+          return;
+        }
 
         const data = await res.json().catch(() => ({}));
 
@@ -251,7 +351,9 @@
           localStorage.setItem(SESSION_KEY, sessionId);
         }
 
-        appendMessage(data.reply || "(No response)", "assistant");
+        const reply = data.reply || "(No response)";
+        appendMessage(reply, "assistant");
+        maybeAutoOpenVehicleForm(reply);
       } catch (err) {
         typing.remove();
         appendMessage("Network error: " + err.message, "error");

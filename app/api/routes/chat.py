@@ -1,6 +1,9 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from langchain_core.exceptions import LangChainException
 
+from app.agent.errors import clear_error_log, init_error_log
+from app.auth.context import set_current_user, set_pending_vehicle
+from app.auth.deps import require_user
 from app.schemas.chat import ChatRequest, ChatResponse
 from app.services.chat_service import ChatConfigurationError, ChatService
 from app.services.odoo_client import OdooApiError
@@ -10,9 +13,17 @@ _chat_service = ChatService()
 
 
 @router.post("", response_model=ChatResponse)
-async def chat(request: ChatRequest) -> ChatResponse:
+async def chat(
+    body: ChatRequest,
+    request: Request,
+    user: dict = Depends(require_user),
+) -> ChatResponse:
+    set_current_user(user)
+    pending = request.session.pop("pending_vehicle", None)
+    set_pending_vehicle(pending)
+    init_error_log()
     try:
-        result = await _chat_service.chat(request.message, request.session_id)
+        result = await _chat_service.chat(body.message, body.session_id)
         return ChatResponse(**result)
     except ChatConfigurationError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
@@ -22,6 +33,10 @@ async def chat(request: ChatRequest) -> ChatResponse:
         raise HTTPException(status_code=502, detail=f"AI agent error: {exc}") from exc
     except Exception as exc:
         raise HTTPException(status_code=502, detail=f"AI agent error: {exc}") from exc
+    finally:
+        set_current_user(None)
+        set_pending_vehicle(None)
+        clear_error_log()
 
 
 @router.get("/odoo-health")
