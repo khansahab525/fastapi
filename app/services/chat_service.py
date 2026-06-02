@@ -63,6 +63,32 @@ def _user_context_prefix() -> str:
     return "\n".join(parts) + "\n"
 
 
+def _meta_intent_prefix(message: str) -> str:
+    text = (message or "").strip().lower()
+    if not text:
+        return ""
+    meta_phrases = (
+        "what can you do",
+        "help",
+        "capabilities",
+        "menu",
+        "services",
+        "options",
+        "ماذا يمكنك",
+        "ايش تقدر",
+        "وش تقدر",
+        "مساعدة",
+    )
+    if any(phrase in text for phrase in meta_phrases):
+        return (
+            "[Meta-intent override: User is asking about capabilities/help. "
+            "Do NOT continue any previous order workflow state. "
+            "Do NOT ask for vehicle/location/agreement in this turn. "
+            "Reply with concise capability options and ask what the user wants next.]\n"
+        )
+    return ""
+
+
 class ChatService:
     def __init__(self) -> None:
         from app.services.odoo_client import OdooClient
@@ -72,7 +98,7 @@ class ChatService:
     async def chat(self, message: str, session_id: str | None = None) -> dict[str, Any]:
         agent = _get_agent()
         thread_id = session_id or str(uuid.uuid4())
-        full_message = _user_context_prefix() + message
+        full_message = _meta_intent_prefix(message) + _user_context_prefix() + message
 
         result = await agent.ainvoke(
             {"messages": [{"role": "user", "content": full_message}]},
