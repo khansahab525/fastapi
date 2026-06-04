@@ -8,9 +8,11 @@ from app.api.routes import api_router
 from app.config import settings
 
 STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
+PROJECT_ROOT = STATIC_DIR.parent
 CHAT_HTML = STATIC_DIR / "chat.html"
 LOGIN_HTML = STATIC_DIR / "login.html"
 VEHICLE_FORM_HTML = STATIC_DIR / "vehicle-form.html"
+LOGO_PATH = PROJECT_ROOT / "logo.jpeg"
 
 app = FastAPI(
     title=settings.app_name,
@@ -38,6 +40,11 @@ def _is_logged_in(request: Request) -> bool:
 @app.get("/favicon.ico", include_in_schema=False)
 def favicon() -> FileResponse:
     return FileResponse(STATIC_DIR / "favicon.svg", media_type="image/svg+xml")
+
+
+@app.get("/logo.jpeg", include_in_schema=False)
+def logo() -> FileResponse:
+    return FileResponse(LOGO_PATH, media_type="image/jpeg")
 
 
 @app.get("/login", response_class=HTMLResponse, include_in_schema=False, response_model=None)

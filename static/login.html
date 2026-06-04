@@ -3,145 +3,185 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Albassami | Login</title>
+  <title>Albsassami AI | Login</title>
   <link rel="icon" href="/favicon.ico" type="image/svg+xml" />
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       min-height: 100vh;
-      font-family: "Roboto", "Segoe UI", Helvetica, Arial, sans-serif;
-      background: #f0eeee url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23d4d4d4' fill-opacity='0.35'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-      display: flex;
-      flex-direction: column;
-    }
-    .odoo-navbar {
-      background: #875a7b;
-      color: #fff;
-      padding: 0.6rem 1.5rem;
-      font-size: 1.15rem;
-      font-weight: 500;
-      letter-spacing: 0.02em;
-      box-shadow: 0 1px 3px rgba(0,0,0,.12);
-    }
-    .wrap {
-      flex: 1;
+      font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(135deg, #2aa3e6 0%, #1f8fd6 35%, #1577c4 70%, #0f63ad 100%);
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 2rem 1rem;
     }
-    .card {
-      background: #fff;
-      width: 100%;
-      max-width: 400px;
-      border-radius: 3px;
-      box-shadow: 0 2px 4px rgba(0,0,0,.08), 0 8px 24px rgba(0,0,0,.1);
-      overflow: hidden;
+    /* decorative soft spheres, like the screenshot */
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+      background: radial-gradient(circle at 35% 30%, rgba(255,255,255,0.45), rgba(120,200,255,0.15) 55%, rgba(255,255,255,0) 70%);
     }
-    .card-head {
-      text-align: center;
-      padding: 2rem 1.5rem 1rem;
+    .orb-1 { width: 460px; height: 460px; left: -140px; bottom: -120px; }
+    .orb-2 { width: 90px; height: 90px; left: 210px; top: 46%; opacity: 0.9; }
+
+    .login-block {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      max-width: 440px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
     .logo {
-      width: 64px;
-      height: 64px;
-      margin: 0 auto 1rem;
-      background: #875a7b;
-      border-radius: 8px;
+      width: 116px;
+      height: 116px;
+      border-radius: 20px;
+      margin-bottom: -40px;
+      object-fit: cover;
+      box-shadow: 0 8px 22px rgba(0,0,0,.28);
+      background: #fff;
+      position: relative;
+      z-index: 3;
+    }
+    .card {
+      width: 100%;
+      background: rgba(214, 235, 250, 0.92);
+      border: 1px solid rgba(255,255,255,0.6);
+      border-radius: 10px;
+      box-shadow: 0 12px 30px rgba(0,0,0,.25);
+      padding: 3.6rem 2.2rem 2.2rem;
+      backdrop-filter: blur(4px);
+    }
+    .card h1 {
+      text-align: center;
+      font-size: 1.7rem;
+      font-weight: 700;
+      color: #1a2a3a;
+      margin-bottom: 1.7rem;
+    }
+    .field {
+      position: relative;
+      margin-bottom: 1.2rem;
+    }
+    .field input {
+      width: 100%;
+      padding: 0.85rem 0.9rem;
+      border: 1px solid #5b6b7a;
+      border-radius: 5px;
+      font-size: 1.02rem;
+      background: #fff;
+      color: #1a2a3a;
+      outline: none;
+    }
+    .field input:focus { border-color: #0f63ad; box-shadow: 0 0 0 2px rgba(15,99,173,.2); }
+    /* floating label that overlaps the top border (screenshot style) */
+    .field .float-label {
+      position: absolute;
+      top: -8px;
+      left: 10px;
+      padding: 0 5px;
+      background: rgba(214, 235, 250, 0.95);
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #1a2a3a;
+    }
+    .field.has-eye input { padding-right: 2.6rem; }
+    .eye {
+      position: absolute;
+      top: 50%;
+      right: 8px;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #4a5b6a;
+      font-size: 1.1rem;
+      line-height: 1;
+      padding: 4px;
+    }
+    .remember {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+      color: #1a2a3a;
+      margin: 0.2rem 0 1.1rem;
+    }
+    .remember input { width: 18px; height: 18px; accent-color: #0f63ad; }
+    .btn-login {
+      width: 100%;
+      padding: 0.85rem;
+      background: #0f63ad;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #fff;
-      font-size: 2rem;
-      font-weight: 700;
+      gap: 0.5rem;
     }
-    .card-head h1 {
-      font-size: 1.35rem;
-      font-weight: 400;
-      color: #4c4c4c;
-    }
-    .card-head p {
-      font-size: 0.85rem;
-      color: #888;
-      margin-top: 0.35rem;
-    }
-    form {
-      padding: 0 1.75rem 2rem;
-    }
-    label {
-      display: block;
-      font-size: 0.8rem;
-      color: #666;
-      margin-bottom: 0.35rem;
-    }
-    input {
-      width: 100%;
-      padding: 0.55rem 0.65rem;
-      border: 1px solid #ccc;
-      border-radius: 3px;
-      font-size: 0.95rem;
-      margin-bottom: 1rem;
-      outline: none;
-    }
-    input:focus {
-      border-color: #875a7b;
-      box-shadow: 0 0 0 2px rgba(135, 90, 123, 0.2);
-    }
-    .btn-login {
-      width: 100%;
-      padding: 0.65rem;
-      background: #875a7b;
-      color: #fff;
-      border: none;
-      border-radius: 3px;
-      font-size: 1rem;
-      cursor: pointer;
-      font-weight: 500;
-    }
-    .btn-login:hover { background: #714b67; }
+    .btn-login:hover { background: #0c558f; }
     .btn-login:disabled { opacity: 0.65; cursor: not-allowed; }
     .error {
       background: #f8d7da;
       color: #842029;
       border: 1px solid #f5c2c7;
-      border-radius: 3px;
+      border-radius: 4px;
       padding: 0.6rem 0.75rem;
       font-size: 0.85rem;
       margin-bottom: 1rem;
       display: none;
     }
-    .footer {
-      text-align: center;
-      font-size: 0.75rem;
-      color: #999;
-      padding-bottom: 1rem;
+    @media (max-width: 720px) {
+      body { justify-content: center; padding: 1.5rem; }
     }
   </style>
 </head>
 <body>
-  <div class="odoo-navbar">Albassami Cargo</div>
-  <div class="wrap">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+
+  <div class="login-block">
+    <img class="logo" src="/logo.jpeg" alt="Albsassami" />
     <div class="card">
-      <div class="card-head">
-        <div class="logo">A</div>
-        <h1>Log in</h1>
-        <p>Cargo chat assistant</p>
-      </div>
+      <h1>Log in to Albsassami AI</h1>
       <form id="login-form">
         <div id="error" class="error"></div>
-        <label for="login">Email</label>
-        <input id="login" name="login" type="email" autocomplete="username" required placeholder="your@email.com" />
-        <label for="password">Password</label>
-        <input id="password" name="password" type="password" autocomplete="current-password" required />
-        <button type="submit" class="btn-login" id="submit">Log in</button>
+        <div class="field">
+          <span class="float-label">Account name or email</span>
+          <input id="login" name="login" type="text" autocomplete="username" required />
+        </div>
+        <div class="field has-eye">
+          <input id="password" name="password" type="password" autocomplete="current-password" required placeholder="Password" />
+          <button type="button" class="eye" id="toggle-pw" aria-label="Show password">&#128065;</button>
+        </div>
+        <label class="remember">
+          <input type="checkbox" id="remember" checked />
+          Remember me
+        </label>
+        <button type="submit" class="btn-login" id="submit">&#8594;&nbsp; Log in</button>
       </form>
-      <div class="footer">Powered by Odoo credentials</div>
     </div>
   </div>
+
   <script>
     const form = document.getElementById("login-form");
     const errorEl = document.getElementById("error");
     const submitBtn = document.getElementById("submit");
+    const pw = document.getElementById("password");
+    const toggle = document.getElementById("toggle-pw");
+
+    toggle.addEventListener("click", () => {
+      pw.type = pw.type === "password" ? "text" : "password";
+    });
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -155,7 +195,7 @@
           credentials: "same-origin",
           body: JSON.stringify({
             login: document.getElementById("login").value.trim(),
-            password: document.getElementById("password").value,
+            password: pw.value,
           }),
         });
         const data = await res.json().catch(() => ({}));
