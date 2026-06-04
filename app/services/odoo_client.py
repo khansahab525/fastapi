@@ -68,57 +68,12 @@ class OdooClient:
 
         return payload.get("data", payload)
 
-    async def get_cargo_line(self, reference: str) -> dict[str, Any]:
-        return await self._request(
-            "GET",
-            "/api/chatbot/cargo/line",
-            params={"reference": reference},
-        )
-
-    async def search_cargo_lines(
-        self,
-        query: str,
-        search_type: str = "reference",
-        limit: int = 5,
-    ) -> dict[str, Any]:
-        return await self._request(
-            "POST",
-            "/api/chatbot/cargo/search",
-            json_body={"query": query, "search_type": search_type, "limit": limit},
-        )
-
-    async def get_cargo_order(self, name: str) -> dict[str, Any]:
-        return await self._request(
-            "GET",
-            "/api/chatbot/cargo/order",
-            params={"name": name},
-        )
-
     async def chatbot_login(self, login: str, password: str) -> dict[str, Any]:
         return await self._request(
             "POST",
             "/api/chatbot/auth/login",
             json_body={"login": login, "password": password},
         )
-
-    async def get_chatbot_defaults(self) -> dict[str, Any]:
-        return await self._request("GET", "/api/chatbot/defaults")
-
-    async def list_vehicles(
-        self,
-        *,
-        user_id: int | None = None,
-        partner_id: int | None = None,
-        customer_mobile: str | None = None,
-    ) -> dict[str, Any]:
-        params: dict[str, Any] = {}
-        if user_id is not None:
-            params["user_id"] = user_id
-        if partner_id is not None:
-            params["partner_id"] = partner_id
-        if customer_mobile:
-            params["customer_mobile"] = customer_mobile
-        return await self._request("GET", "/api/chatbot/vehicles", params=params)
 
     async def get_vehicle_form_options(self) -> dict[str, Any]:
         return await self._request("GET", "/api/chatbot/vehicle/form-options")
@@ -149,10 +104,10 @@ class OdooClient:
             params={"car_make_id": car_make_id, "query": query, "limit": limit},
         )
 
-    async def create_cargo_order(self, payload: dict[str, Any]) -> dict[str, Any]:
+    async def get_cargo_quote(self, payload: dict[str, Any]) -> dict[str, Any]:
         return await self._request(
             "POST",
-            "/api/chatbot/cargo/order/create",
+            "/api/chatbot/cargo/quote",
             json_body=payload,
         )
 
